@@ -1,93 +1,76 @@
 <script lang="ts">
- import { onMount } from 'svelte';
+  import { onMount } from 'svelte';
 
+  let name = '';
   let email = '';
   let password = '';
 
-  // Password policy tracking
-  let policy = {
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    number: false,
-    special: false
-  };
+  let loading = false;
+  let message = '';
 
-  // Type-safe password check
-  function checkPassword(pw: string) {
-    policy.length = pw.length >= 8;
-    policy.uppercase = /[A-Z]/.test(pw);
-    policy.lowercase = /[a-z]/.test(pw);
-    policy.number = /[0-9]/.test(pw);
-    policy.special = /[!@#$%^&*(),.?":{}|<>]/.test(pw);
-  }
+  async function handleSignup() {
+    loading = true;
+    message = '';
 
-  // Signup function (basic example)
-  async function signup() {
     try {
       const res = await fetch('http://localhost:3000/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password })
       });
 
-      if (!res.ok) throw new Error('Signup failed');
-      alert('Signup successful!');
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error(err.message);
-        alert(err.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        message = "❌ " + (data.message || "Signup failed");
       } else {
-        console.error('Unknown error', err);
+        message = "✅ Signup successful!";
+        name = email = password = '';
       }
+    } catch (err: any) {
+      message = "❌ Network error: " + err.message;
     }
+
+    loading = false;
   }
 </script>
 
-<div class="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-  <div class="w-80 p-6 bg-white shadow-lg rounded-xl">
+<div class="max-w-md mx-auto mt-20 p-6 rounded-2xl shadow-xl bg-white">
+  <h1 class="text-3xl font-bold mb-6 text-center">Create Account</h1>
+
+  <div class="space-y-4">
     <input
-      type="email"
+      class="w-full p-3 border rounded-lg"
+      placeholder="Full Name"
+      bind:value={name}
+    />
+
+    <input
+      class="w-full p-3 border rounded-lg"
       placeholder="Email"
+      type="email"
       bind:value={email}
-      class="w-full mb-3 p-2 border rounded"
     />
 
     <input
-      type="password"
+      class="w-full p-3 border rounded-lg"
       placeholder="Password"
+      type="password"
       bind:value={password}
-      on:input={(e: Event) => {
-        const target = e.target as HTMLInputElement;
-        checkPassword(target.value);
-      }}
-      class="w-full mb-3 p-2 border rounded"
     />
-
-    <ul class="text-sm mb-4">
-      <li class={policy.length ? 'text-green-600' : 'text-red-500'}>
-        At least 8 characters
-      </li>
-      <li class={policy.uppercase ? 'text-green-600' : 'text-red-500'}>
-        One uppercase letter
-      </li>
-      <li class={policy.lowercase ? 'text-green-600' : 'text-red-500'}>
-        One lowercase letter
-      </li>
-      <li class={policy.number ? 'text-green-600' : 'text-red-500'}>
-        One number
-      </li>
-      <li class={policy.special ? 'text-green-600' : 'text-red-500'}>
-        One special character
-      </li>
-    </ul>
 
     <button
-      class="w-full bg-green-500 text-white p-2 rounded disabled:opacity-50"
-      on:click={signup}
-      disabled={!Object.values(policy).every(Boolean)}
+      class="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+      on:click={handleSignup}
+      disabled={loading}
     >
-      Sign Up
+      {loading ? "Creating account..." : "Sign Up"}
     </button>
+
+    {#if message}
+      <p class="text-center mt-3">{message}</p>
+    {/if}
   </div>
 </div>

@@ -1,29 +1,65 @@
 <script lang="ts">
-  import axios from 'axios';
-
   let email = '';
   let password = '';
 
-  async function handleLogin() {
+  let loading = false;
+  let message = '';
+
+  async function handleSignin() {
+    loading = true;
+    message = '';
+
     try {
-      const response = await axios.post('http://localhost:3000/login', {
-        email,
-        password
+      const res = await fetch('http://localhost:3000/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
-      console.log('Success:', response.data);
-    } catch (error: any) {
-      // Older axios doesn’t have isAxiosError, so check manually
-      if (error.response) {
-        console.error('Axios error:', error.response.data || error.message);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        message = "❌ " + (data.message || "Login failed");
       } else {
-        console.error('Unknown error:', error);
+        message = "✅ Logged in!";
+        email = password = "";
       }
+    } catch (err: any) {
+      message = "❌ Network error: " + err.message;
     }
+
+    loading = false;
   }
 </script>
 
-<form on:submit|preventDefault={handleLogin}>
-  <input type="email" bind:value={email} placeholder="Email" required />
-  <input type="password" bind:value={password} placeholder="Password" required />
-  <button type="submit">Login</button>
-</form>
+<div class="max-w-md mx-auto mt-20 p-6 rounded-2xl shadow-xl bg-white">
+  <h1 class="text-3xl font-bold mb-6 text-center">Welcome Back</h1>
+
+  <div class="space-y-4">
+    <input
+      class="w-full p-3 border rounded-lg"
+      placeholder="Email"
+      type="email"
+      bind:value={email}
+    />
+
+    <input
+      class="w-full p-3 border rounded-lg"
+      placeholder="Password"
+      type="password"
+      bind:value={password}
+    />
+
+    <button
+      class="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+      on:click={handleSignin}
+      disabled={loading}
+    >
+      {loading ? "Logging in..." : "Sign In"}
+    </button>
+
+    {#if message}
+      <p class="text-center mt-3">{message}</p>
+    {/if}
+  </div>
+</div>
