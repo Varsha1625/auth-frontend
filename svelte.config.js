@@ -1,11 +1,8 @@
-import vercel from '@sveltejs/adapter-vercel';
-import sveltePreprocess from 'svelte-preprocess';
+import adapter from '@sveltejs/adapter-vercel';
 
 const config = {
-    preprocess: sveltePreprocess(),
-
     kit: {
-        adapter: vercel()
+        adapter: adapter()
     }
 };
 
